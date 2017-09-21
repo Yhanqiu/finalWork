@@ -26,19 +26,21 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         music_list = (ListView) findViewById(R.id.musicList);
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, nameList);
-        music_list.setAdapter(adapter);
 
         Test.saveMusic();
         musics = DataSupport.findAll(Music.class);
-        if (musics.size() > 0) {
-            for (Music m : musics) {
-                nameList.add(m.getName());
-                artistList.add(m.getArtist());
-                adapter.notifyDataSetChanged();
-                music_list.setSelection(0);
-            }
-        }
+
+        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, nameList);
+        MusicAdapter musicAdapter = new MusicAdapter(MainActivity.this,R.layout.music_item,musics);
+        music_list.setAdapter(musicAdapter);
+//        if (musics.size() > 0) {
+//            for (Music m : musics) {
+//                nameList.add(m.getName());
+//                artistList.add(m.getArtist());
+//                adapter.notifyDataSetChanged();
+//                music_list.setSelection(0);
+//            }
+//        }
 
 //        boolean a = getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER);
 //        boolean b = getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR);
