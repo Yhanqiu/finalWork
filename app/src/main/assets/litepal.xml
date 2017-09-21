@@ -1,0 +1,7 @@
+<litepal>
+    <dbname value="musicDB"/>
+    <version value="1"/>
+    <list>
+        <mapping class="com.example.administrator.exmusic_final.db.Music"/>
+    </list>
+</litepal>
