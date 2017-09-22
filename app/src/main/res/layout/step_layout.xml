@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/stepLayout"
     android:orientation="vertical"
+    android:background="@color/color1"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <TextView
@@ -11,13 +12,17 @@
         android:text="0"
         android:textSize="50sp"
         android:layout_gravity="center"
-        android:layout_marginTop="50dp"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="40dp"/>
 
     <FrameLayout
         android:id="@+id/userFrame"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <fragment
+            android:name="com.example.administrator.exmusic_final.RegisterFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
 
     </FrameLayout>
 

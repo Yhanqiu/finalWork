@@ -1,10 +1,14 @@
 package com.example.administrator.exmusic_final;
 
 import android.content.pm.PackageManager;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 
 import com.example.administrator.exmusic_final.db.Music;
@@ -20,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private List<String> nameList = new ArrayList<String>();
     private List<String> artistList = new ArrayList<String>();
     private ArrayAdapter<String> adapter;
+    private Button loginBt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,5 +50,16 @@ public class MainActivity extends AppCompatActivity {
 //        boolean a = getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER);
 //        boolean b = getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR);
 //        Log.d("testtest",a+",,"+b);
+
+//        loginBt = (Button)findViewById(R.id.loginButton);
+//        loginBt.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                FragmentManager fragmentManager = getSupportFragmentManager();
+//                FragmentTransaction transaction = fragmentManager.beginTransaction();
+//                transaction.replace(R.id.userFrame,new UserInfoFragment());
+//                transaction.commit();
+//            }
+//        });
     }
 }
