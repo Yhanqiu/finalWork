@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         music_list = (ListView) findViewById(R.id.musicList);
 
-        Test.saveMusic();
+//        Test.saveMusic();
         musics = DataSupport.findAll(Music.class);
 
         adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, nameList);
