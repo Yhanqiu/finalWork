@@ -13,6 +13,10 @@ public class Test {
             Music music = new Music();
             music.setName("music"+i);
             music.setArtist("artist"+i);
+            music.setArtist("artist"+i);
+            music.setImageURL("image"+i);
+            music.setLrcURL("lrc"+i);
+            music.setMusicURL("musicurl"+i);
             music.save();
         }
 

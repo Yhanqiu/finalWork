@@ -3,6 +3,7 @@ package com.example.administrator.exmusic_final;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +27,8 @@ public class MusicAdapter extends ArrayAdapter<Music> {
         resourceId = id;
     }
 
+
+
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
@@ -35,6 +38,7 @@ public class MusicAdapter extends ArrayAdapter<Music> {
         TextView artistText = (TextView)view.findViewById(R.id.artist_text);
         nameText.setText(music.getName());
         artistText.setText(music.getArtist());
+        Log.d("musicadapter",music.getName()+music.getArtist());
         return view;
     }
 }
