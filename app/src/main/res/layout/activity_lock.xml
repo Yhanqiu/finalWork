@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="bottom"
+    android:orientation="vertical"
+    android:background="@drawable/lock_back"
+    android:id="@+id/lock_layout"
+
+    tools:context="com.example.administrator.exmusic_final.Activities.LockActivity">
+
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="150dp">
+
+        <ImageButton
+            android:id="@+id/LPlayBt"
+            android:layout_width="80dp"
+            android:layout_height="70dp"
+            android:layout_marginBottom="50dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginTop="8dp"
+            android:background="#00000000"
+            android:scaleType="centerInside"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/LPrevBt"
+            android:layout_width="80dp"
+            android:layout_height="70dp"
+            android:layout_marginBottom="50dp"
+            android:layout_marginRight="40dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/ic_last"
+            android:background="#00000000"
+            android:scaleType="centerInside"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/LPlayBt"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.363" />
+
+        <ImageButton
+            android:id="@+id/LNextBt"
+            android:layout_width="80dp"
+            android:layout_height="70dp"
+            android:src="@drawable/ic_next"
+            android:background="#00000000"
+            android:scaleType="centerInside"
+            app:layout_constraintLeft_toRightOf="@+id/LPlayBt"
+            android:layout_marginLeft="40dp"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintVertical_bias="0.125" />
+
+
+    </android.support.constraint.ConstraintLayout>
+
+</LinearLayout>

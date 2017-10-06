@@ -39,6 +39,7 @@ import java.util.List;
 import com.example.administrator.exmusic_final.Utils.DisplayUtil;
 import com.example.administrator.exmusic_final.Utils.FastBlurUtil;
 import com.example.administrator.exmusic_final.widget.BackgourndAnimationRelativeLayout;
+import com.example.administrator.exmusic_final.widget.BackgroundAdapter;
 import com.example.administrator.exmusic_final.widget.DiscView;
 
 import static com.example.administrator.exmusic_final.widget.DiscView.DURATION_NEEDLE_ANIAMTOR;
@@ -147,7 +148,7 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         }
     }
-
+//删除，service直接从网络获取资源
     private void initMusicDatas() {
         MusicData musicData1 = new MusicData(R.raw.music1, R.raw.ic_music1, "寻", "三亩地");
         MusicData musicData2 = new MusicData(R.raw.music2, R.raw.ic_music2, "Nightingale", "YANI");
@@ -161,13 +162,14 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
         intent.putExtra(PARAM_MUSIC_LIST, (Serializable) mMusicDatas);
         startService(intent);
     }
-
+//传入参数变成文件系统url
     private void try2UpdateMusicPicBackground(final int musicPicRes) {
         if (mRootLayout.isNeed2UpdateBackground(musicPicRes)) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    final Drawable foregroundDrawable = getForegroundDrawable(musicPicRes);
+//                    final Drawable foregroundDrawable = getForegroundDrawable(musicPicRes);
+                    final Drawable foregroundDrawable = BackgroundAdapter.getForegroundDrawable(PlayMusicActivity.this,musicPicRes);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {

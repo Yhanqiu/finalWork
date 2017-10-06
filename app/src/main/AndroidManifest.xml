@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.administrator.exmusic_final">
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
@@ -19,6 +21,23 @@
             </intent-filter>
         </activity>
         <activity android:name=".Activities.PlayMusicActivity"/>
+
+        <activity android:name=".Activities.LockActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait"
+            android:taskAffinity="com.example.administrator.exmusic_final.lockactivity"
+            android:theme="@style/LockScreenBase"
+            android:noHistory="true"/>
+
+        <service
+            android:name=".Services.LockService"
+            android:enabled="true"
+            android:exported="true"></service>
+        <service android:name=".Services.MusicService"
+            android:enabled="true"
+            android:exported="true"/>
     </application>
 
 </manifest>

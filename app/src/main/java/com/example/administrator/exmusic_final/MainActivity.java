@@ -13,6 +13,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.administrator.exmusic_final.Activities.PlayMusicActivity;
+import com.example.administrator.exmusic_final.Services.LockService;
 import com.example.administrator.exmusic_final.Utils.HttpUtil;
 import com.example.administrator.exmusic_final.Utils.MusicUtil;
 import com.example.administrator.exmusic_final.db.Music;
@@ -47,9 +48,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Intent lockIntent = new Intent(MainActivity.this, LockService.class);
+        startService(lockIntent);
+        Log.d("test","before lock");
         music_list = (ListView) findViewById(R.id.musicList);
 
-//        Test.saveMusic();
+        Test.saveMusic();
         musics = DataSupport.findAll(Music.class);
 
         adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, nameList);
@@ -92,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
 //        }).start();
 //==========================================================================================
 //        sendRequestTest();
-        queryMusics();
+//        queryMusics();
 
 
 //        if (musics.size() > 0) {
@@ -127,7 +131,8 @@ public class MainActivity extends AppCompatActivity {
                 HttpURLConnection connection = null;
                 BufferedReader reader = null;
                 try {
-                    URL url = new URL("http://172.25.107.112:8080/app/musics.json");
+//                    URL url = new URL("http://172.25.107.112:8080/app/musics.json");
+                    URL url = new URL("http://192.168.1.103:8080/test/musics.json");
                     connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
                     connection.setConnectTimeout(8000);
@@ -174,7 +179,8 @@ public class MainActivity extends AppCompatActivity {
         } else {
             //更新缓存音乐列表，保证下次断网打开apk数据与本次退出保持一致
             DataSupport.deleteAll(Music.class);
-            String address = "http://172.25.107.112:8080/app/musics.json";
+//            String address = "http://172.25.107.112:8080/app/musics.json";
+            String address = "http://192.168.1.103:8080/test/musics.json";
             queryFromServer(address);
             Log.e("music", "queryMusic failed");
         }

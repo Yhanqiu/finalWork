@@ -9,10 +9,12 @@ import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import com.example.administrator.exmusic_final.Activities.PlayMusicActivity;
 import com.example.administrator.exmusic_final.ModelsTest.MusicData;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,6 +102,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
             mMediaPlayer = MediaPlayer.create(getApplicationContext(), mMusicDatas.get(index)
                     .getMusicRes());
+
             mMediaPlayer.start();
             mMediaPlayer.setOnCompletionListener(this);
             mCurrentMusicIndex = index;
