@@ -11,9 +11,13 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.danikula.videocache.CacheListener;
+import com.danikula.videocache.HttpProxyCacheServer;
 import com.example.administrator.exmusic_final.Activities.PlayMusicActivity;
+import com.example.administrator.exmusic_final.App;
 import com.example.administrator.exmusic_final.ModelsTest.MusicData;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +26,7 @@ import java.util.List;
  * Created by Administrator on 2017/9/29.
  */
 
-public class MusicService extends Service implements MediaPlayer.OnCompletionListener{
+public class MusicService extends Service implements MediaPlayer.OnCompletionListener, CacheListener {
 
     /*操作指令*/
     public static final String ACTION_OPT_MUSIC_PLAY = "ACTION_OPT_MUSIC_PLAY";
@@ -36,11 +40,13 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     public static final String ACTION_STATUS_MUSIC_PAUSE = "ACTION_STATUS_MUSIC_PAUSE";
     public static final String ACTION_STATUS_MUSIC_COMPLETE = "ACTION_STATUS_MUSIC_COMPLETE";
     public static final String ACTION_STATUS_MUSIC_DURATION = "ACTION_STATUS_MUSIC_DURATION";
+    public static final String ACTION_CACHE_PROGRESS = "ACTION_CACHE_PROGRESS";
 
     public static final String PARAM_MUSIC_DURATION = "PARAM_MUSIC_DURATION";
     public static final String PARAM_MUSIC_SEEK_TO = "PARAM_MUSIC_SEEK_TO";
     public static final String PARAM_MUSIC_CURRENT_POSITION = "PARAM_MUSIC_CURRENT_POSITION";
     public static final String PARAM_MUSIC_IS_OVER = "PARAM_MUSIC_IS_OVER";
+    public static final String CACHE_PROGRESS = "CACHE_PROGRESS";
 
     private int mCurrentMusicIndex = 0;
     private boolean mIsMusicPause = false;
@@ -81,35 +87,73 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         intentFilter.addAction(ACTION_OPT_MUSIC_LAST);
         intentFilter.addAction(ACTION_OPT_MUSIC_SEEK_TO);
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMusicReceiver,intentFilter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMusicReceiver, intentFilter);
     }
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         mMediaPlayer.release();
         mMediaPlayer = null;
+        App.getProxy(this).unregisterCacheListener(this);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMusicReceiver);
+        super.onDestroy();
+    }
+
+    @Override
+    public void onCacheAvailable(File cacheFile, String url, int percentsAvailable) {
+        Log.d(App.TAG, percentsAvailable + "");
+        sendCacheProgressBroadcast(percentsAvailable);
     }
 
     private void play(final int index) {
-        if (index >= mMusicDatas.size()) return;
-        if (mCurrentMusicIndex == index && mIsMusicPause) {
+//        if (index >= mMusicDatas.size()) return;
+//        if (mCurrentMusicIndex == index && mIsMusicPause) {
+//            mMediaPlayer.start();
+//        } else {
+//            mMediaPlayer.stop();
+//            mMediaPlayer = null;
+//
+//            mMediaPlayer = MediaPlayer.create(getApplicationContext(), mMusicDatas.get(index)
+//                    .getMusicRes());
+//
+//            mMediaPlayer.start();
+//            mMediaPlayer.setOnCompletionListener(this);
+//            mCurrentMusicIndex = index;
+//            mIsMusicPause = false;
+//
+//            int duration = mMediaPlayer.getDuration();
+//            sendMusicDurationBroadCast(duration);
+//        }
+        if (mIsMusicPause) {
             mMediaPlayer.start();
+            Log.d(App.TAG,"from out");
+            App.isPause = false;
         } else {
-            mMediaPlayer.stop();
-            mMediaPlayer = null;
+            try {
 
-            mMediaPlayer = MediaPlayer.create(getApplicationContext(), mMusicDatas.get(index)
-                    .getMusicRes());
+                HttpProxyCacheServer proxy = App.getProxy(this);
+                proxy.registerCacheListener(this, "http://172.25.107.112:8080/app/Easily.mp3");
+                String proxyURL = proxy.getProxyUrl("http://172.25.107.112:8080/app/Easily.mp3");
+                mMediaPlayer.setDataSource(proxyURL);
+                mMediaPlayer.prepareAsync();
+                Log.d(App.TAG, "im prepared?");
+                mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        mMediaPlayer.start();
+                        Log.d(App.TAG, "im prepared.");
+                        mMediaPlayer.setOnCompletionListener(MusicService.this);
+                        mIsMusicPause = false;
+                        App.isPause = false;
 
-            mMediaPlayer.start();
-            mMediaPlayer.setOnCompletionListener(this);
-            mCurrentMusicIndex = index;
-            mIsMusicPause = false;
+                        int duration = mMediaPlayer.getDuration();
+                        sendMusicDurationBroadCast(duration);
+                    }
+                });
 
-            int duration = mMediaPlayer.getDuration();
-            sendMusicDurationBroadCast(duration);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         sendMusicStatusBroadCast(ACTION_STATUS_MUSIC_PLAY);
     }
@@ -117,7 +161,9 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     private void pause() {
         mMediaPlayer.pause();
         mIsMusicPause = true;
+        App.isPause = true;
         sendMusicStatusBroadCast(ACTION_STATUS_MUSIC_PAUSE);
+        Log.d(App.TAG,"pause");
     }
 
     private void stop() {
@@ -175,6 +221,13 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
+    private void sendCacheProgressBroadcast(int cacheProgress) {
+        Intent intent = new Intent(ACTION_CACHE_PROGRESS);
+        intent.putExtra(CACHE_PROGRESS, cacheProgress);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+
+    }
+
     private void sendMusicDurationBroadCast(int duration) {
         Intent intent = new Intent(ACTION_STATUS_MUSIC_DURATION);
         intent.putExtra(PARAM_MUSIC_DURATION, duration);
@@ -184,7 +237,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     private void sendMusicStatusBroadCast(String action) {
         Intent intent = new Intent(action);
         if (action.equals(ACTION_STATUS_MUSIC_PLAY)) {
-            intent.putExtra(PARAM_MUSIC_CURRENT_POSITION,mMediaPlayer.getCurrentPosition());
+            intent.putExtra(PARAM_MUSIC_CURRENT_POSITION, mMediaPlayer.getCurrentPosition());
         }
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }

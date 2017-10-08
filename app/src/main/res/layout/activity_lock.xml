@@ -2,14 +2,34 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/lock_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/lock_back"
+    android:fitsSystemWindows="true"
     android:gravity="bottom"
     android:orientation="vertical"
-    android:background="@drawable/lock_back"
-    android:id="@+id/lock_layout"
 
     tools:context="com.example.administrator.exmusic_final.Activities.LockActivity">
+
+    <TextView
+        android:id="@+id/stepNum"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:gravity="center_vertical|center_horizontal"
+        android:text="0"
+        android:textColor="@color/white"
+        android:textSize="100dp" />
+
+
+    <TextView
+        android:id="@+id/lrcText"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center_vertical|center_horizontal"
+        android:text="歌词"
+        android:textColor="@color/white"
+        android:textSize="20dp" />
 
 
     <android.support.constraint.ConstraintLayout
@@ -38,9 +58,9 @@
             android:layout_marginBottom="50dp"
             android:layout_marginRight="40dp"
             android:layout_marginTop="8dp"
-            android:src="@drawable/ic_last"
             android:background="#00000000"
             android:scaleType="centerInside"
+            android:src="@drawable/ic_last"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintRight_toLeftOf="@+id/LPlayBt"
             app:layout_constraintTop_toTopOf="parent"
@@ -50,15 +70,15 @@
             android:id="@+id/LNextBt"
             android:layout_width="80dp"
             android:layout_height="70dp"
-            android:src="@drawable/ic_next"
+            android:layout_marginBottom="8dp"
+            android:layout_marginLeft="40dp"
+            android:layout_marginTop="8dp"
             android:background="#00000000"
             android:scaleType="centerInside"
-            app:layout_constraintLeft_toRightOf="@+id/LPlayBt"
-            android:layout_marginLeft="40dp"
-            app:layout_constraintTop_toTopOf="parent"
-            android:layout_marginTop="8dp"
+            android:src="@drawable/ic_next"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginBottom="8dp"
+            app:layout_constraintLeft_toRightOf="@+id/LPlayBt"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.125" />
 
 
