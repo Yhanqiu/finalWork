@@ -457,7 +457,7 @@ public class DiscView extends RelativeLayout {
             objectAnimator.start();
         }
         /**
-         * 唱盘动画可能执行多次，只有不是音乐不在播放状态，在回调执行播放
+         * 唱盘动画可能执行多次，只有不是音乐不在播放状态，再回调执行播放
          * */
         if (musicStatus != MusicStatus.PLAY) {
             notifyMusicStatusChanged(MusicChangedStatus.PLAY);

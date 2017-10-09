@@ -4,6 +4,9 @@ package com.example.administrator.exmusic_final.Activities;
  * Created by Administrator on 2017/9/29.
  */
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -20,12 +23,14 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.RemoteViews;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -84,8 +89,6 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
         makeStatusBarTransparent();
     }
 
-
-
     private void initMusicReceiver() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(MusicService.ACTION_STATUS_MUSIC_PLAY);
@@ -93,7 +96,7 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
         intentFilter.addAction(MusicService.ACTION_STATUS_MUSIC_DURATION);
         intentFilter.addAction(MusicService.ACTION_STATUS_MUSIC_COMPLETE);
         /*注册本地广播*/
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMusicReceiver, intentFilter);
+        registerReceiver(mMusicReceiver, intentFilter);
     }
 
     private void initView() {
@@ -263,6 +266,7 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
         switch (musicChangedStatus) {
             case PLAY: {
                 play();
+                Log.d(App.TAG,musicChangedStatus+"///");
                 break;
             }
             case PAUSE: {
@@ -346,13 +350,13 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
     }
 
     private void optMusic(final String action) {
-        LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(action));
+        sendBroadcast(new Intent(action));
     }
 
     private void seekTo(int position) {
         Intent intent = new Intent(MusicService.ACTION_OPT_MUSIC_SEEK_TO);
         intent.putExtra(MusicService.PARAM_MUSIC_SEEK_TO, position);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        sendBroadcast(intent);
     }
 
     private void startUpdateSeekBarProgress() {
@@ -418,6 +422,6 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMusicReceiver);
+        unregisterReceiver(mMusicReceiver);
     }
 }

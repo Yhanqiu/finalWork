@@ -107,7 +107,7 @@ public class LockActivity extends SwipeBackActivity implements View.OnClickListe
     }
 
     private void optMusic(final String action) {
-        LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(action));
+        sendBroadcast(new Intent(action));
     }
 
     public void setPlayPauseBt(int i) {
