@@ -1,6 +1,6 @@
 <litepal>
     <dbname value="musicDB"/>
-    <version value="2"/>
+    <version value="5"/>
     <list>
         <mapping class="com.example.administrator.exmusic_final.db.Music"/>
     </list>

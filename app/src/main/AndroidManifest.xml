@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.administrator.exmusic_final">
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
     <application
         android:name=".App"
@@ -13,37 +15,43 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".Activities.MainActivity"></activity>
+        <activity android:name=".Activities.ForgetPw" />
+        <activity android:name=".Activities.LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Activities.PlayMusicActivity"/>
-
-        <activity android:name=".Activities.LockActivity"
+        <activity android:name=".Activities.RegisterActivity" />
+        <activity android:name=".Activities.PlayMusicActivity">
+        </activity>
+        <activity
+            android:name=".Activities.LockActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleInstance"
+            android:noHistory="true"
             android:screenOrientation="portrait"
             android:taskAffinity="com.example.administrator.exmusic_final.lockactivity"
-            android:theme="@style/LockScreenBase"
-            android:noHistory="true"/>
+            android:theme="@style/LockScreenBase" />
 
         <service
             android:name=".Services.LockService"
             android:enabled="true"
-            android:exported="true"></service>
-        <service android:name=".Services.MusicService"
+            android:exported="true" />
+        <service
+            android:name=".Services.MusicService"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="ACTION_OPT_MUSIC_PLAY"/>
-                <action android:name="ACTION_OPT_MUSIC_NEXT"/>
-                <action android:name="ACTION_OPT_MUSIC_LAST"/>
+                <action android:name="ACTION_OPT_MUSIC_PLAY" />
+                <action android:name="ACTION_OPT_MUSIC_NEXT" />
+                <action android:name="ACTION_OPT_MUSIC_LAST" />
             </intent-filter>
         </service>
+
     </application>
 
 </manifest>

@@ -11,6 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -35,6 +36,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.example.administrator.exmusic_final.App;
+import com.example.administrator.exmusic_final.ModelsTest.LrcDataBuilder;
 import com.example.administrator.exmusic_final.ModelsTest.MusicData;
 import com.example.administrator.exmusic_final.R;
 import com.example.administrator.exmusic_final.Services.MusicService;
@@ -42,6 +44,8 @@ import com.example.administrator.exmusic_final.Services.MusicService;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.example.administrator.exmusic_final.Utils.DisplayUtil;
 import com.example.administrator.exmusic_final.Utils.FastBlurUtil;
@@ -49,13 +53,21 @@ import com.example.administrator.exmusic_final.db.Music;
 import com.example.administrator.exmusic_final.widget.BackgourndAnimationRelativeLayout;
 import com.example.administrator.exmusic_final.widget.BackgroundAdapter;
 import com.example.administrator.exmusic_final.widget.DiscView;
+import com.example.administrator.exmusic_final.widget.ILrcView;
+import com.example.administrator.exmusic_final.widget.LrcRow;
+import com.example.administrator.exmusic_final.widget.LrcView;
+
+import org.litepal.crud.DataSupport;
 
 import static com.example.administrator.exmusic_final.widget.DiscView.DURATION_NEEDLE_ANIAMTOR;
 
 public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPlayInfo, View
         .OnClickListener {
     private int duration;
+    private int musicId;
+    private List<Music> musicList = new ArrayList<Music>();
 
+    private LrcView mLrcView;
     private DiscView mDisc;
     private Toolbar mToolbar;
     private SeekBar mSeekBar;
@@ -71,6 +83,7 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             mSeekBar.setProgress(mSeekBar.getProgress() + 1000);
+            mLrcView.seekLrcToTime(mSeekBar.getProgress() + 1000);
             mTvMusicDuration.setText(duration2Time(mSeekBar.getProgress()));
             startUpdateSeekBarProgress();
         }
@@ -83,10 +96,17 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.play_music);
-        initMusicDatas();
+        musicId = getIntent().getIntExtra("musicId", 0);
+        initMusicDatas(musicId);
         initView();
         initMusicReceiver();
         makeStatusBarTransparent();
+//        List<LrcRow> lrcRows = new LrcDataBuilder().BuiltFromAssets(this, "test2.lrc");
+//
+//        mLrcView.setLrcData(lrcRows);
+//        // 开始播放歌曲并同步展示歌词
+//        Timer mTimer = new Timer();
+//        TimerTask mTask =
     }
 
     private void initMusicReceiver() {
@@ -100,7 +120,9 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
     }
 
     private void initView() {
+        mLrcView = (LrcView) findViewById(R.id.lrcview);
         mDisc = (DiscView) findViewById(R.id.discview);
+//        mDisc.setVisibility(View.INVISIBLE);
         mIvNext = (ImageView) findViewById(R.id.ivNext);
         mIvLast = (ImageView) findViewById(R.id.ivLast);
         mIvPlayOrPause = (ImageView) findViewById(R.id.ivPlayOrPause);
@@ -132,7 +154,19 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 seekTo(seekBar.getProgress());
+                mLrcView.seekLrcToTime(seekBar.getProgress());
                 startUpdateSeekBarProgress();
+            }
+        });
+
+
+        List<LrcRow> lrcRows = new LrcDataBuilder().BuiltFromAssets(this, "小幸运.lrc");
+        mLrcView.setLrcData(lrcRows);
+        mLrcView.setLrcViewSeekListener(new ILrcView.LrcViewSeekListener() {
+            @Override
+            public void onSeek(LrcRow currentlrcrow, long Currenselectrowtime) {
+                seekTo((int) Currenselectrowtime);
+                mLrcView.seekLrcToTime(Currenselectrowtime);
             }
         });
 
@@ -159,8 +193,8 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
         }
     }
 
-    //删除，service直接从网络获取资源
-    private void initMusicDatas() {
+    //更改为操作数据库
+    private void initMusicDatas(int musicId) {
         MusicData musicData1 = new MusicData(R.raw.music1, R.raw.ic_music1, "寻", "三亩地");
         MusicData musicData2 = new MusicData(R.raw.music2, R.raw.ic_music2, "Nightingale", "YANI");
         MusicData musicData3 = new MusicData(R.raw.music3, R.raw.ic_music3, "Cornfield Chase", "Hans Zimmer");
@@ -169,8 +203,12 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
         mMusicDatas.add(musicData2);
         mMusicDatas.add(musicData3);
 
+        musicList = DataSupport.findAll(Music.class);
+
         Intent intent = new Intent(this, MusicService.class);
         intent.putExtra(PARAM_MUSIC_LIST, (Serializable) mMusicDatas);
+        intent.putExtra("musicId", musicId);
+
         startService(intent);
     }
 
@@ -266,7 +304,7 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
         switch (musicChangedStatus) {
             case PLAY: {
                 play();
-                Log.d(App.TAG,musicChangedStatus+"///");
+                Log.d(App.TAG, musicChangedStatus + "///");
                 break;
             }
             case PAUSE: {
@@ -321,6 +359,7 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
         mRootLayout.postDelayed(new Runnable() {
             @Override
             public void run() {
+                musicId = (musicId + 1) % musicList.size();
                 optMusic(MusicService.ACTION_OPT_MUSIC_NEXT);
             }
         }, DURATION_NEEDLE_ANIAMTOR);
@@ -333,6 +372,7 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
         mRootLayout.postDelayed(new Runnable() {
             @Override
             public void run() {
+                musicId = (musicId - 1) % musicList.size();
                 optMusic(MusicService.ACTION_OPT_MUSIC_LAST);
             }
         }, DURATION_NEEDLE_ANIAMTOR);
@@ -350,6 +390,9 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
     }
 
     private void optMusic(final String action) {
+        Intent intent = new Intent(action);
+        intent.putExtra("musicId", musicId);
+        Log.d("sillyIndex",musicId+"");
         sendBroadcast(new Intent(action));
     }
 
@@ -382,7 +425,7 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
     }
 
     private void updateSecondaryProgress(int cacheProgress) {
-        Log.d(App.TAG,"secpro"+duration * cacheProgress / 100);
+        Log.d(App.TAG, "secpro" + duration * cacheProgress / 100);
         mSeekBar.setSecondaryProgress(duration * cacheProgress / 100);
     }
 
@@ -401,11 +444,12 @@ public class PlayMusicActivity extends AppCompatActivity implements DiscView.IPl
                 }
             } else if (action.equals(MusicService.ACTION_STATUS_MUSIC_PAUSE)) {
                 mIvPlayOrPause.setImageResource(R.drawable.ic_play);
-                Log.d(App.TAG,"here");
+                Log.d(App.TAG, "here");
                 if (mDisc.isPlaying()) {
                     mDisc.playOrPause();
                 }
             } else if (action.equals(MusicService.ACTION_STATUS_MUSIC_DURATION)) {
+                Log.d("herehere", "adfhkdhfal");
                 duration = intent.getIntExtra(MusicService.PARAM_MUSIC_DURATION, 0);
                 updateMusicDurationInfo(duration);
                 updateSecondaryProgress(100);

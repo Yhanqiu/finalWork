@@ -7,11 +7,20 @@ import org.litepal.crud.DataSupport;
  */
 
 public class Music extends DataSupport {
+    private String queryId;
     private String name;
     private String artist;
     private String musicURL;
     private String imageURL;
     private String lrcURL;
+
+    public String getQueryId() {
+        return queryId;
+    }
+
+    public void setQueryId(String queryId) {
+        this.queryId = queryId;
+    }
 
     public String getMusicURL() {
         return musicURL;

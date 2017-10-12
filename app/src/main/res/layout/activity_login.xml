@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.administrator.exmusic_final.Activities.LoginActivity">
+
+    <include
+        android:id="@+id/pw_login_layout"
+        layout="@layout/pw_login_layout" />
+    <include
+        android:id="@+id/finger_login_layout"
+        layout="@layout/finger_login_layout"/>
+
+</FrameLayout>

@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
@@ -24,6 +25,9 @@ import com.example.administrator.exmusic_final.Activities.PlayMusicActivity;
 import com.example.administrator.exmusic_final.App;
 import com.example.administrator.exmusic_final.ModelsTest.MusicData;
 import com.example.administrator.exmusic_final.R;
+import com.example.administrator.exmusic_final.db.Music;
+
+import org.litepal.crud.DataSupport;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,10 +67,12 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     private boolean mFromNotification = false;
 
+    private int musicId;
     private int mCurrentMusicIndex = -1;
     private boolean mIsMusicPause = false;
     private boolean nIsMusicPause = false;
     private List<MusicData> mMusicDatas = new ArrayList<>();
+    private List<Music> musicList = new ArrayList<Music>();
 
     private MusicReceiver mMusicReceiver = new MusicReceiver();
     private MediaPlayer mMediaPlayer = new MediaPlayer();
@@ -101,9 +107,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        musicList = DataSupport.findAll(Music.class);
         String action = intent.getAction();
-        Log.d(App.TAG,action+"onstart");
-            initMusicDatas(intent);
+        musicId = intent.getIntExtra("musicId", 0);
+        Log.d(App.TAG, action + "onstart");
+        initMusicDatas(intent);
 //        else if (ACTION_SIOP_SERVICE.equals(action)) {
 //            stopService();
 //        } else if (ACTION_FAVORITE.equals(action)) {
@@ -113,19 +121,19 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 //            isShowLyric = isShowLyric ? false : true;
 //            showNotification();
 //        }
+//        play(musicId);
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        manager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         initBoardCastReceiver();
-
     }
 
     private void showNotification() {
-        Log.d(App.TAG,"notify");
+        Log.d(App.TAG, "notify");
 
 //        PendingIntent pendingIntent = PendingIntent.getActivity(this, new Random().nextInt(), new Intent(this, PlayMusicActivity.class), 0);
 
@@ -140,7 +148,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 .build();
 //        startForeground(100, notification);
 
-        manager.notify(100,notification);
+        manager.notify(100, notification);
     }
 
 
@@ -175,24 +183,24 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     void updateNotificationView(RemoteViews remoteViews) {
 //        Song song = mPlayList.getCurrentSong();
 //        Bitmap thumb = FileUtils.parseThumbToBitmap(song);
-        Bitmap thumb = BitmapFactory.decodeResource(getResources(),R.drawable.test_back);
+        Bitmap thumb = BitmapFactory.decodeResource(getResources(), R.drawable.test_back);
 //        if (thumb == null) {
 //            remoteViews.setImageViewResource(R.id.thumb, R.drawable.pic_error_150);
 //        } else {
-            remoteViews.setImageViewBitmap(R.id.widget_album, thumb);
+        remoteViews.setImageViewBitmap(R.id.widget_album, thumb);
 //        }
         remoteViews.setTextViewText(R.id.song_name, "music1");
 //        remoteViews.setTextViewText(R.id.info, getString(R.string.song_info, song.getArtist(), song.getAlbum()));
         remoteViews.setTextViewText(R.id.artist, "artist1");
 //        remoteViews.setImageViewResource(R.id.favorite, isFavorite ? R.drawable.notification_love_checked_32 : R.drawable.notification_love_32);
-        remoteViews.setImageViewResource(R.id.play, nIsMusicPause? R.drawable.ic_play : R.drawable.ic_pause);
+        remoteViews.setImageViewResource(R.id.play, nIsMusicPause ? R.drawable.ic_play : R.drawable.ic_pause);
 //        remoteViews.setImageViewResource(R.id.lyric, isShowLyric ? R.drawable.notification_lyric_checked_32 : R.drawable.notification_lyric_32);
     }
 
     private PendingIntent getPendingIntent(String extra) {
 //        PendingIntent pi = PendingIntent.getService(this, new Random().nextInt(), new Intent(action), 0);
-        PendingIntent pi = PendingIntent.getBroadcast(this, new Random().nextInt(),new Intent(extra),0);
-        Log.d(App.TAG,pi.toString()+"what???");
+        PendingIntent pi = PendingIntent.getBroadcast(this, new Random().nextInt(), new Intent(extra), 0);
+        Log.d(App.TAG, pi.toString() + "what???");
         return pi;
     }
 
@@ -275,11 +283,12 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         intentFilter.addAction(ACTION_BUTTON);
 
 //        LocalBroadcastManager.getInstance(this).registerReceiver(mMusicReceiver, intentFilter);
-        registerReceiver(mMusicReceiver,intentFilter);
+        registerReceiver(mMusicReceiver, intentFilter);
     }
 
     @Override
     public void onDestroy() {
+        Log.d("serviceonde", "afsdjk");
         mMediaPlayer.release();
         mMediaPlayer = null;
         App.getProxy(this).unregisterCacheListener(this);
@@ -287,6 +296,10 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 //        if (remoteViews != null) {
 //            manager.cancel(100);
 //        }
+        SharedPreferences sp = getSharedPreferences("currentStatus", MODE_APPEND);
+        SharedPreferences.Editor serviceEditor = sp.edit();
+        serviceEditor.putBoolean("ifServiceRunning", false);
+        serviceEditor.apply();
         super.onDestroy();
     }
 
@@ -297,7 +310,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     private void play(final int index) {
-        Log.d(App.TAG,mIsMusicPause+"");
+        Log.d(App.TAG, mIsMusicPause + "");
 
 //        if (index >= mMusicDatas.size()) return;
 //        if (mCurrentMusicIndex == index && mIsMusicPause) {
@@ -319,7 +332,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 //        }
 
         showNotification();
-        if (mIsMusicPause) {
+        Log.d("indexindex",mCurrentMusicIndex+",,,"+index);
+        if (mIsMusicPause && mCurrentMusicIndex == index) {
             mMediaPlayer.start();
             Log.d(App.TAG, "from out");
 //            mIsMusicPause = false;
@@ -327,10 +341,13 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
             nIsMusicPause = false;
         } else {
             try {
-
                 HttpProxyCacheServer proxy = App.getProxy(this);
-                proxy.registerCacheListener(this, "http://172.25.107.112:8080/app/Easily.mp3");
-                String proxyURL = proxy.getProxyUrl("http://172.25.107.112:8080/app/Easily.mp3");
+//                String url = "http://172.25.107.112:8080/app/Easily.mp3";
+                Log.d("wtf", musicId + "");
+                String url = "http:/172.25.107.112:8080/ExMusic/TestMusic?msg=music&id=" + musicList.get(index).getQueryId();
+                proxy.registerCacheListener(this, url);
+                String proxyURL = proxy.getProxyUrl(url);
+                Log.d("urlurl", proxyURL);
                 mMediaPlayer.setDataSource(proxyURL);
                 mMediaPlayer.prepareAsync();
                 Log.d(App.TAG, "im prepared?");
@@ -343,6 +360,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                         mIsMusicPause = false;
                         App.isPause = false;
                         nIsMusicPause = false;
+                        mCurrentMusicIndex = index;
 
                         int duration = mMediaPlayer.getDuration();
                         sendMusicDurationBroadCast(duration);
@@ -371,17 +389,19 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     private void next() {
-        if (mCurrentMusicIndex + 1 < mMusicDatas.size()) {
-            play(mCurrentMusicIndex + 1);
-        } else {
-            stop();
-        }
+//        if (mCurrentMusicIndex + 1 < mMusicDatas.size()) {
+        mMediaPlayer.reset();
+        play((mCurrentMusicIndex + 1) % musicList.size());
+//        } else {
+//            stop();
+//        }
     }
 
     private void last() {
-        if (mCurrentMusicIndex != 0) {
-            play(mCurrentMusicIndex - 1);
-        }
+//        if (mCurrentMusicIndex != 0) {
+        mMediaPlayer.reset();
+        play((mCurrentMusicIndex - 1) % musicList.size());
+//        }
     }
 
     private void seekTo(Intent intent) {
@@ -394,6 +414,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public void onCompletion(MediaPlayer mp) {
         sendMusicCompleteBroadCast();
+        mMediaPlayer.reset();
     }
 
     class MusicReceiver extends BroadcastReceiver {
@@ -401,9 +422,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            Log.d(App.TAG,"receive"+action);
+            Log.d(App.TAG, "receive" + action);
             if (action.equals(ACTION_OPT_MUSIC_PLAY)) {
-                play(mCurrentMusicIndex);
+                int index = intent.getIntExtra("musicId", 0);
+                play(index);
+//                play(mCurrentMusicIndex);
             } else if (action.equals(ACTION_OPT_MUSIC_PAUSE)) {
                 pause();
             } else if (action.equals(ACTION_OPT_MUSIC_LAST)) {
@@ -414,7 +437,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 seekTo(intent);
             } else if (action.equals(ACTION_BUTTON)) {
 
-                if(nIsMusicPause){
+                if (nIsMusicPause) {
                     play(mCurrentMusicIndex);
                 } else {
                     pause();
@@ -432,14 +455,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     private void sendCacheProgressBroadcast(int cacheProgress) {
         Intent intent = new Intent(ACTION_CACHE_PROGRESS);
         intent.putExtra(CACHE_PROGRESS, cacheProgress);
-       sendBroadcast(intent);
+        sendBroadcast(intent);
 
     }
 
     private void sendMusicDurationBroadCast(int duration) {
         Intent intent = new Intent(ACTION_STATUS_MUSIC_DURATION);
         intent.putExtra(PARAM_MUSIC_DURATION, duration);
-       sendBroadcast(intent);
+        sendBroadcast(intent);
     }
 
     private void sendMusicStatusBroadCast(String action) {
