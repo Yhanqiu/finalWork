@@ -34,7 +34,7 @@
         android:layout_height="54dp"
         android:layout_marginTop="50dp"
         android:text="登录"
-        android:background="@color/color1"
+        android:background="@color/soft_blue"
         android:layout_gravity="center"/>
 
     <!--<TextView-->

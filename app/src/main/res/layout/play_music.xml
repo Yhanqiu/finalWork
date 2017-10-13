@@ -11,11 +11,34 @@
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolBar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="70dp"
         android:layout_alignParentTop="true"
         android:background="@android:color/transparent"
         app:subtitleTextAppearance="@style/netease_toolbar_subtitle"
-        app:titleTextAppearance="@style/netease_toolbar_title" />
+        app:titleTextAppearance="@style/netease_toolbar_title" >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/musicName"
+                android:layout_weight="2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="music1"
+                android:textSize="20sp"
+                android:textColor="@color/white"/>
+            <TextView
+                android:id="@+id/musicArtist"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="artist1"
+                android:textColor="@color/white"/>
+        </LinearLayout>
+    </android.support.v7.widget.Toolbar>
 
     <View
         android:layout_width="match_parent"
@@ -28,12 +51,6 @@
         android:layout_height="wrap_content"
         android:layout_above="@+id/rlMusicTime"
         android:layout_below="@id/toolBar">
-
-        <include
-            android:id="@+id/discview"
-            layout="@layout/layout_discview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
 
         <com.example.administrator.exmusic_final.widget.LrcView
             android:id="@+id/lrcview"

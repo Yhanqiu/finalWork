@@ -9,6 +9,14 @@
 
     </style>
 
+    <style name="MyActionBarStyle" parent="@style/Widget.AppCompat.Light.ActionBar.Solid">
+        <item name="android:background">@color/soft_blue</item>
+        <!-- Support library compatibility -->
+        <item name="background">@color/soft_blue</item>
+        <!--解决左边一直有一块边距的问题 contentInsetStart = 0 -->
+        <item name="contentInsetStart">0dp</item>
+        <item name="contentInsetEnd">0dp</item>
+    </style>
 
     <style name="netease_toolbar_title" parent="@style/TextAppearance.Widget.AppCompat.Toolbar.Title">
         <item name="android:textColor">@android:color/white</item>
@@ -27,8 +35,7 @@
         <item name="android:textSize">9sp</item>
     </style>
 
-    <style name="neteasa_music_time_seek_bar_sytle"
-        parent="Widget.AppCompat.SeekBar">
+    <style name="neteasa_music_time_seek_bar_sytle" parent="Widget.AppCompat.SeekBar">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:thumb">@drawable/ic_seekbar_thumb</item>

@@ -15,7 +15,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Activities.MainActivity"></activity>
+        <activity
+            android:name=".Activities.MainActivity"
+            android:launchMode="singleTask" />
         <activity android:name=".Activities.ForgetPw" />
         <activity android:name=".Activities.LoginActivity">
             <intent-filter>
@@ -25,8 +27,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".Activities.RegisterActivity" />
-        <activity android:name=".Activities.PlayMusicActivity">
-        </activity>
+        <activity android:name=".Activities.PlayMusicActivity" />
         <activity
             android:name=".Activities.LockActivity"
             android:excludeFromRecents="true"
@@ -52,6 +53,10 @@
             </intent-filter>
         </service>
 
+        <activity
+            android:name=".Activities.FunctionActivity"
+            android:launchMode="singleTask" />
+        <activity android:name=".Activities.BaseActivity"></activity>
     </application>
 
 </manifest>

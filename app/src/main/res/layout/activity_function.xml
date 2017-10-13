@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
+    android:layout_height="match_parent"
+    tools:context="com.example.administrator.exmusic_final.Activities.FunctionActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="bottom"
         android:orientation="vertical"
         tools:context="com.example.administrator.exmusic_final.Activities.MainActivity">
 
@@ -33,7 +31,7 @@
                     android:layout_gravity="center_horizontal"
                     android:scaleType="centerInside"
                     android:layout_marginRight="10dp"
-                    android:src="@drawable/t_actionbar_music_normal"/>
+                    android:src="@drawable/t_actionbar_music_selected"/>
 
                 <ImageView
                     android:id="@+id/function_music"
@@ -42,14 +40,13 @@
                     android:scaleType="centerInside"
                     android:layout_gravity="center_horizontal"
                     android:layout_marginLeft="10dp"
-                    android:src="@drawable/t_actionbar_friends_selected"
+                    android:src="@drawable/t_actionbar_friends_normal"
                     />
             </LinearLayout>
         </android.support.v7.widget.Toolbar>
 
-
         <ListView
-            android:id="@+id/musicList"
+            android:id="@+id/functionList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginLeft="8dp"
@@ -60,30 +57,6 @@
             app:layout_constraintTop_toTopOf="parent"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp" />
-
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="fsakfaf"/>
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="start">
-
-        <include layout="@layout/step_layout"></include>
-        <!--<fragment-->
-        <!--android:name="com.example.administrator.exmusic_final.RegisterFragment"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"/>-->
-
-            <!--<include layout="@layout/register_fragment"></include>-->
-    </LinearLayout>
-    <!--<fragment-->
-    <!--android:name="com.example.administrator.exmusic_final.RegisterFragment"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:layout_gravity="start"/>-->
-</android.support.v4.widget.DrawerLayout>
-
+</LinearLayout>

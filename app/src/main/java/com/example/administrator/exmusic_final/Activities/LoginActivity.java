@@ -74,9 +74,18 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         initViews();
+    }
+
+    @Override
+    protected void onStart() {
+        Log.d("onstart","fad");
+        super.onStart();
+
         if (checkLayout()) {
             pwLayout.setVisibility(View.INVISIBLE);
             fingerLayout.setVisibility(View.VISIBLE);
+            sensorResult.setText("Touch sensor");
+            sensorResult.setTextColor(getColor(R.color.grey));
             initFinger();
         } else {
             pwLayout.setVisibility(View.VISIBLE);

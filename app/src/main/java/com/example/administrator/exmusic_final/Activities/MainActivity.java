@@ -2,6 +2,8 @@ package com.example.administrator.exmusic_final.Activities;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,15 +12,15 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.administrator.exmusic_final.MusicAdapter;
+import com.example.administrator.exmusic_final.widget.MusicAdapter;
 import com.example.administrator.exmusic_final.R;
 import com.example.administrator.exmusic_final.Services.LockService;
-import com.example.administrator.exmusic_final.Test;
 import com.example.administrator.exmusic_final.Utils.HttpUtil;
-import com.example.administrator.exmusic_final.Utils.LoginUtil;
 import com.example.administrator.exmusic_final.Utils.MusicUtil;
 import com.example.administrator.exmusic_final.db.Music;
 
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private MusicAdapter musicAdapter;
     private ArrayAdapter<String> adapter;
     private Button loginBt;
+    private ImageView function_music;
 
     private ProgressDialog progressDialog;
 
@@ -52,6 +55,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (Build.VERSION.SDK_INT >= 21) {
+            View decorView = getWindow().getDecorView();
+            int option = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+            decorView.setSystemUiVisibility(option);
+            getWindow().setStatusBarColor(Color.TRANSPARENT);
+        }
+        function_music = (ImageView)findViewById(R.id.function_music);
+        function_music.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this,FunctionActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                startActivity(intent);
+//                overridePendingTransition(0, 0);
+            }
+        });
 
         Intent lockIntent = new Intent(MainActivity.this, LockService.class);
         startService(lockIntent);
@@ -61,7 +81,6 @@ public class MainActivity extends AppCompatActivity {
 //        Test.saveMusic();
 //        musics = DataSupport.findAll(Music.class);
 
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, nameList);
         musicAdapter = new MusicAdapter(MainActivity.this, R.layout.music_item, musics);
         music_list.setAdapter(musicAdapter);
         music_list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -73,61 +92,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 //=========================================================================================
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try{
-//                    Thread.sleep(5000);
-//                    musics.clear();
-//                    musics = DataSupport.findAll(Music.class);
-//                    runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            Music testMusic = new Music();
-//                            testMusic.setName("test");
-//                            testMusic.setImageURL("test");
-//                            testMusic.setMusicURL("test");
-//                            testMusic.setLrcURL("test");
-//                            testMusic.setArtist("test");
-//                            musics.add(testMusic);
-//                            musicAdapter.notifyDataSetChanged();
-//                            music_list.setSelection(0);
-//                        }
-//                    });
-//                }catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//
-//            }
-//        }).start();
-//==========================================================================================
 //        sendRequestTest();
         queryMusics();
-
-
-//        if (musics.size() > 0) {
-//            for (Music m : musics) {
-//                nameList.add(m.getName());
-//                artistList.add(m.getArtist());
-//                adapter.notifyDataSetChanged();
-//                music_list.setSelection(0);
-//            }
-//        }
-
-//        boolean a = getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER);
-//        boolean b = getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR);
-//        Log.d("testtest",a+",,"+b);
-
-//        loginBt = (Button)findViewById(R.id.loginButton);
-//        loginBt.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                FragmentManager fragmentManager = getSupportFragmentManager();
-//                FragmentTransaction transaction = fragmentManager.beginTransaction();
-//                transaction.replace(R.id.userFrame,new UserInfoFragment());
-//                transaction.commit();
-//            }
-//        });
     }
 
     private void sendRequestTest() {
@@ -244,10 +210,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        overridePendingTransition(0, 0);
+        super.onPause();
+    }
+
+    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            moveTaskToBack(false);
-            return true;
+            finish();
         }
         return super.onKeyDown(keyCode, event);
     }

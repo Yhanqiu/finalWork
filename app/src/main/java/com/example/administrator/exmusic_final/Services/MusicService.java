@@ -32,6 +32,7 @@ import org.litepal.crud.DataSupport;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Handler;
@@ -49,12 +50,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     public static final String ACTION_OPT_MUSIC_LAST = "ACTION_OPT_MUSIC_LAST";
     public static final String ACTION_OPT_MUSIC_SEEK_TO = "ACTION_OPT_MUSIC_SEEK_TO";
 
+
     /*状态指令*/
     public static final String ACTION_STATUS_MUSIC_PLAY = "ACTION_STATUS_MUSIC_PLAY";
     public static final String ACTION_STATUS_MUSIC_PAUSE = "ACTION_STATUS_MUSIC_PAUSE";
     public static final String ACTION_STATUS_MUSIC_COMPLETE = "ACTION_STATUS_MUSIC_COMPLETE";
     public static final String ACTION_STATUS_MUSIC_DURATION = "ACTION_STATUS_MUSIC_DURATION";
     public static final String ACTION_CACHE_PROGRESS = "ACTION_CACHE_PROGRESS";
+    public static final String REFRESH_ID = "REFRESH_ID";
 
     public static final String PARAM_MUSIC_DURATION = "PARAM_MUSIC_DURATION";
     public static final String PARAM_MUSIC_SEEK_TO = "PARAM_MUSIC_SEEK_TO";
@@ -63,11 +66,10 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     public static final String CACHE_PROGRESS = "CACHE_PROGRESS";
 
     public static final String ACTION_BUTTON = "ACTION_BUTTON";
-    public static final String ACTION = "ACTION";
-
-    private boolean mFromNotification = false;
 
     private int musicId;
+    private boolean ifLocal = false;
+//    private boolean ifJustLocal = false;
     private int mCurrentMusicIndex = -1;
     private boolean mIsMusicPause = false;
     private boolean nIsMusicPause = false;
@@ -107,11 +109,17 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        musicList = DataSupport.findAll(Music.class);
         String action = intent.getAction();
         musicId = intent.getIntExtra("musicId", 0);
+        musicList = (ArrayList<Music>) intent.getSerializableExtra("localMusics");
+        if (musicList != null) {
+            ifLocal = true;
+        } else {
+            ifLocal = false;
+            musicList = DataSupport.findAll(Music.class);
+        }
         Log.d(App.TAG, action + "onstart");
-        initMusicDatas(intent);
+//        initMusicDatas(intent);
 //        else if (ACTION_SIOP_SERVICE.equals(action)) {
 //            stopService();
 //        } else if (ACTION_FAVORITE.equals(action)) {
@@ -121,7 +129,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 //            isShowLyric = isShowLyric ? false : true;
 //            showNotification();
 //        }
-//        play(musicId);
+        play(musicId);
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -189,9 +197,9 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 //        } else {
         remoteViews.setImageViewBitmap(R.id.widget_album, thumb);
 //        }
-        remoteViews.setTextViewText(R.id.song_name, "music1");
+        remoteViews.setTextViewText(R.id.song_name, musicList.get(mCurrentMusicIndex).getName());
 //        remoteViews.setTextViewText(R.id.info, getString(R.string.song_info, song.getArtist(), song.getAlbum()));
-        remoteViews.setTextViewText(R.id.artist, "artist1");
+        remoteViews.setTextViewText(R.id.artist, musicList.get(mCurrentMusicIndex).getArtist());
 //        remoteViews.setImageViewResource(R.id.favorite, isFavorite ? R.drawable.notification_love_checked_32 : R.drawable.notification_love_32);
         remoteViews.setImageViewResource(R.id.play, nIsMusicPause ? R.drawable.ic_play : R.drawable.ic_pause);
 //        remoteViews.setImageViewResource(R.id.lyric, isShowLyric ? R.drawable.notification_lyric_checked_32 : R.drawable.notification_lyric_32);
@@ -199,7 +207,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     private PendingIntent getPendingIntent(String extra) {
 //        PendingIntent pi = PendingIntent.getService(this, new Random().nextInt(), new Intent(action), 0);
-        PendingIntent pi = PendingIntent.getBroadcast(this, new Random().nextInt(), new Intent(extra), 0);
+        Intent intent = new Intent(extra);
+//        Log.d("hhh",mCurrentMusicIndex+"hhh");
+//        if (extra.equals(ACTION_OPT_MUSIC_LAST)) {
+//            intent.putExtra("musicId", (mCurrentMusicIndex + musicList.size() - 1) % musicList.size());
+//        } else if (extra.equals(ACTION_OPT_MUSIC_NEXT)) {
+//            intent.putExtra("musicId",(mCurrentMusicIndex + 1) % musicList.size());
+//        }
+        PendingIntent pi = PendingIntent.getBroadcast(this, new Random().nextInt(), intent, 0);
         Log.d(App.TAG, pi.toString() + "what???");
         return pi;
     }
@@ -305,7 +320,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     @Override
     public void onCacheAvailable(File cacheFile, String url, int percentsAvailable) {
-        Log.d(App.TAG, percentsAvailable + "");
+        Log.d("cachecache", percentsAvailable + "");
         sendCacheProgressBroadcast(percentsAvailable);
     }
 
@@ -330,56 +345,116 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 //            int duration = mMediaPlayer.getDuration();
 //            sendMusicDurationBroadCast(duration);
 //        }
-
-        showNotification();
-        Log.d("indexindex",mCurrentMusicIndex+",,,"+index);
-        if (mIsMusicPause && mCurrentMusicIndex == index) {
-            mMediaPlayer.start();
-            Log.d(App.TAG, "from out");
+        if (ifLocal) {
+            Log.d("locallocal", mCurrentMusicIndex + "***" + index);
+            if (nIsMusicPause && mCurrentMusicIndex == index) {
+                mMediaPlayer.start();
+                Log.d(App.TAG, "from out");
 //            mIsMusicPause = false;
-            App.isPause = false;
-            nIsMusicPause = false;
+                App.isPause = false;
+                nIsMusicPause = false;
+                int duration = mMediaPlayer.getDuration();
+                sendMusicDurationBroadCast(duration);
+            } else if (mCurrentMusicIndex != index) {
+                try {
+                    mMediaPlayer.reset();
+                    mMediaPlayer.setDataSource(musicList.get(index).getMusicURL());
+                    mMediaPlayer.prepareAsync();
+                    Log.d(App.TAG, "im prepared?");
+                    mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                        @Override
+                        public void onPrepared(MediaPlayer mp) {
+                            mMediaPlayer.start();
+                            Log.d(App.TAG, "im prepared.");
+                            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                                @Override
+                                public void onCompletion(MediaPlayer mp) {
+                                    Log.d("comcom1","dfjald");
+                                }
+                            });
+                            mIsMusicPause = false;
+                            App.isPause = false;
+                            nIsMusicPause = false;
+//                            mCurrentMusicIndex = index;
+
+                            int duration = mMediaPlayer.getDuration();
+                            sendMusicDurationBroadCast(duration);
+                            sendMusicStatusBroadCast(REFRESH_ID);
+                        }
+                    });
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                int duration = mMediaPlayer.getDuration();
+                sendMusicDurationBroadCast(duration);
+            }
+
         } else {
-            try {
-                HttpProxyCacheServer proxy = App.getProxy(this);
+            Log.d("indexindex", mCurrentMusicIndex + ",,," + index);
+            if (nIsMusicPause && mCurrentMusicIndex == index) {
+                mMediaPlayer.start();
+                Log.d(App.TAG, "from out");
+//            mIsMusicPause = false;
+                App.isPause = false;
+                nIsMusicPause = false;
+                int duration = mMediaPlayer.getDuration();
+                sendMusicDurationBroadCast(duration);
+            } else if (mCurrentMusicIndex != index) {
+                try {
+                    mMediaPlayer.reset();
+                    HttpProxyCacheServer proxy = App.getProxy(this);
 //                String url = "http://172.25.107.112:8080/app/Easily.mp3";
-                Log.d("wtf", musicId + "");
-                String url = "http:/172.25.107.112:8080/ExMusic/TestMusic?msg=music&id=" + musicList.get(index).getQueryId();
-                proxy.registerCacheListener(this, url);
-                String proxyURL = proxy.getProxyUrl(url);
-                Log.d("urlurl", proxyURL);
-                mMediaPlayer.setDataSource(proxyURL);
-                mMediaPlayer.prepareAsync();
-                Log.d(App.TAG, "im prepared?");
-                mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                    @Override
-                    public void onPrepared(MediaPlayer mp) {
-                        mMediaPlayer.start();
-                        Log.d(App.TAG, "im prepared.");
-                        mMediaPlayer.setOnCompletionListener(MusicService.this);
-                        mIsMusicPause = false;
-                        App.isPause = false;
-                        nIsMusicPause = false;
-                        mCurrentMusicIndex = index;
+                    Log.d("wtf", musicId + "");
+                    String url = "http:/172.25.107.112:8080/ExMusic/TestMusic?msg=music&id=" + musicList.get(index).getQueryId();
+                    proxy.registerCacheListener(this, url);
+                    String proxyURL = proxy.getProxyUrl(url);
+                    Log.d("urlurl", proxyURL);
+                    mMediaPlayer.setDataSource(proxyURL);
+                    mMediaPlayer.prepareAsync();
+                    Log.d(App.TAG, "im prepared?");
+                    mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                        @Override
+                        public void onPrepared(MediaPlayer mp) {
+                            mMediaPlayer.start();
+                            Log.d(App.TAG, "im prepared.");
+                            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                                @Override
+                                public void onCompletion(MediaPlayer mp) {
+                                    Log.d("comcom2","dfjald");
+                                }
+                            });
+                            mIsMusicPause = false;
+                            App.isPause = false;
+                            nIsMusicPause = false;
+//                            mCurrentMusicIndex = index;
 
-                        int duration = mMediaPlayer.getDuration();
-                        sendMusicDurationBroadCast(duration);
-                    }
-                });
+                            int duration = mMediaPlayer.getDuration();
+                            sendMusicDurationBroadCast(duration);
+                            sendMusicStatusBroadCast(REFRESH_ID);
+                        }
+                    });
 
-            } catch (IOException e) {
-                e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                int duration = mMediaPlayer.getDuration();
+                sendMusicDurationBroadCast(duration);
             }
         }
+        mCurrentMusicIndex = index;
+        showNotification();
         sendMusicStatusBroadCast(ACTION_STATUS_MUSIC_PLAY);
     }
 
     private void pause() {
-        showNotification();
         mMediaPlayer.pause();
         mIsMusicPause = true;
         App.isPause = true;
         nIsMusicPause = true;
+        showNotification();
         sendMusicStatusBroadCast(ACTION_STATUS_MUSIC_PAUSE);
         Log.d(App.TAG, "pause");
     }
@@ -413,8 +488,10 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        sendMusicCompleteBroadCast();
+//        sendMusicCompleteBroadCast();
         mMediaPlayer.reset();
+        Log.d("comcom",mCurrentMusicIndex+"");
+        play((mCurrentMusicIndex + 1) % musicList.size());
     }
 
     class MusicReceiver extends BroadcastReceiver {
@@ -423,20 +500,23 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             Log.d(App.TAG, "receive" + action);
+            int index = intent.getIntExtra("musicId", mCurrentMusicIndex);
             if (action.equals(ACTION_OPT_MUSIC_PLAY)) {
-                int index = intent.getIntExtra("musicId", 0);
                 play(index);
 //                play(mCurrentMusicIndex);
             } else if (action.equals(ACTION_OPT_MUSIC_PAUSE)) {
                 pause();
             } else if (action.equals(ACTION_OPT_MUSIC_LAST)) {
-                last();
+//                last();
+                mMediaPlayer.reset();
+                play((mCurrentMusicIndex + musicList.size() - 1) % musicList.size());
             } else if (action.equals(ACTION_OPT_MUSIC_NEXT)) {
-                next();
+//                next();
+                mMediaPlayer.reset();
+                play((mCurrentMusicIndex + 1) % musicList.size());
             } else if (action.equals(ACTION_OPT_MUSIC_SEEK_TO)) {
                 seekTo(intent);
             } else if (action.equals(ACTION_BUTTON)) {
-
                 if (nIsMusicPause) {
                     play(mCurrentMusicIndex);
                 } else {
@@ -469,6 +549,12 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         Intent intent = new Intent(action);
         if (action.equals(ACTION_STATUS_MUSIC_PLAY)) {
             intent.putExtra(PARAM_MUSIC_CURRENT_POSITION, mMediaPlayer.getCurrentPosition());
+            intent.putExtra("musicName",musicList.get(mCurrentMusicIndex).getName());
+            intent.putExtra("musicArtist",musicList.get(mCurrentMusicIndex).getArtist());
+            intent.putExtra("ifPause",nIsMusicPause);
+        } else if (action.equals(REFRESH_ID)) {
+            Log.d("indexplay", mCurrentMusicIndex + "");
+            intent.putExtra("musicId", mCurrentMusicIndex);
         }
         sendBroadcast(intent);
     }

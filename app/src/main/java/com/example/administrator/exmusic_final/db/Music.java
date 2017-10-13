@@ -2,11 +2,13 @@ package com.example.administrator.exmusic_final.db;
 
 import org.litepal.crud.DataSupport;
 
+import java.io.Serializable;
+
 /**
  * Created by Administrator on 2017/9/21.
  */
 
-public class Music extends DataSupport {
+public class Music extends DataSupport implements Serializable{
     private String queryId;
     private String name;
     private String artist;
