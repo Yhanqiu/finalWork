@@ -53,7 +53,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private EditText pwEdit;
     private Button loginButton;
     private Button registerButton;
-    private TextView forgetText;
+//    private TextView forgetText;
     private TextView sensorResult;
     private TextView usePwText;
     private ConstraintLayout fingerLayout;
@@ -181,37 +181,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         }
     }
 
-    //sha-265单向散列函数
-    public static String sha(String string) {
-        if (TextUtils.isEmpty(string)) {
-            return "";
-        }
-        MessageDigest md5 = null;
-        try {
-            md5 = MessageDigest.getInstance("sha-256");
-            byte[] bytes = md5.digest((string).getBytes());
-            String result = "";
-            for (byte b : bytes) {
-                String temp = Integer.toHexString(b & 0xff);
-                if (temp.length() == 1) {
-                    temp = "0" + temp;
-                }
-                result += temp;
-            }
-            return result;
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
     //界面初始化
     private void initViews() {
         idEdit = (EditText) findViewById(R.id.idEdit);
         pwEdit = (EditText) findViewById(R.id.PwEdit);
         loginButton = (Button) findViewById(R.id.loginButton);
         registerButton = (Button) findViewById(R.id.registerButton);
-        forgetText = (TextView) findViewById(R.id.forgetText);
+//        forgetText = (TextView) findViewById(R.id.forgetText);
         sensorResult = (TextView) findViewById(R.id.sersor_result);
         usePwText = (TextView)findViewById(R.id.use_pw_text) ;
         usePwText.getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
@@ -220,7 +196,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         loginButton.setOnClickListener(this);
         registerButton.setOnClickListener(this);
-        forgetText.setOnClickListener(this);
+//        forgetText.setOnClickListener(this);
         usePwText.setOnClickListener(this);
     }
 
@@ -230,7 +206,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         String password = pwEdit.getText().toString();
 //        checkInput(account, password);
 //        sendRequest("login",account,password);
-        LoginUtil.sendLoginRequest("login", account, password, new Callback() {
+        LoginUtil.sendLoginRequest("login", account, LoginUtil.sha(password), new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 Log.d("fromServer", e.toString());
@@ -274,54 +250,15 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         }
                     });
                 }else {
-                    Toast.makeText(LoginActivity.this,"Wrong id or wrong password.",Toast.LENGTH_SHORT).show();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(LoginActivity.this,"Wrong id or wrong password.",Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
             }
         });
-    }
-
-    //验证算法
-    private boolean checkInput(String account, String password) {
-        SharedPreferences out = getSharedPreferences("us", MODE_APPEND);
-        SharedPreferences salts = getSharedPreferences("salts", MODE_APPEND);
-        String getPw = out.getString(account, "error");
-        String saltStr = salts.getString(account, "");
-//===========================文件读写存储===================================================
-//        FileInputStream in = null;
-//        BufferedReader reader=null;
-//        StringBuilder content = new StringBuilder();
-//        String line = "";
-//        try{
-//            in = openFileInput("users.txt");
-//            reader=new BufferedReader(new InputStreamReader(in));
-//            while ((line = reader.readLine())!=null){
-//                Toast.makeText(this,line,Toast.LENGTH_SHORT).show();
-////                Log.v("user",line);
-////                content.append(line);
-//            }
-//        }catch (IOException e){
-//            e.printStackTrace();
-//        }finally {
-//            if(reader!=null){
-//                try{
-//                    reader.close();
-//                }catch (IOException e){
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//============================sharedpreferences键值对存储=====================================
-        String calPw = sha(password + saltStr);
-        if (getPw.equals("error")) {
-            Toast.makeText(LoginActivity.this, "用户名不存在", Toast.LENGTH_SHORT).show();
-        } else if (getPw.equals(calPw)) {
-            Toast.makeText(LoginActivity.this, "登陆成功", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "click" + getPw + "===" + calPw + "===" + saltStr);
-        } else {
-            Toast.makeText(LoginActivity.this, "登陆失败", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "click" + getPw + "===" + calPw + "===" + saltStr);
-        }
-        return true;
     }
 
     //跳转注册界面
@@ -347,9 +284,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             case R.id.registerButton:
                 clickRegister();
                 break;
-            case R.id.forgetText:
-                clickForget();
-                break;
+//            case R.id.forgetText:
+//                clickForget();
+//                break;
             case R.id.use_pw_text:
                 SharedPreferences layout = getSharedPreferences("currentStatus", MODE_APPEND);
                 SharedPreferences.Editor layoutEditor = layout.edit();

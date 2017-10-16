@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -72,22 +73,28 @@ public class FunctionActivity extends AppCompatActivity {
     }
 
     private void getLocalMusics() {
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/ExMusic/";
 
         Cursor cursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null,
                 null, MediaStore.Audio.AudioColumns.IS_MUSIC);
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 Music song = new Music();
-                song.setName(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)));
+                String musicName=cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME));
+                String name = musicName.split("\\.")[0];
+                Log.d("testsplit",name);
+                song.setName(name);
                 song.setArtist(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)));
                 song.setMusicURL(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)));
+                song.setImageURL(path+"images/"+name+".jgp");
+                song.setLrcURL(path+"lyrics/"+name+".lrc");
                 Log.d("functionfunction",song.toString());
                 if (cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)) > 1000 * 800) {
                     // 注释部分是切割标题，分离出歌曲名和歌手 （本地媒体库读取的歌曲信息不规范）
                     if (song.getName().contains("-")) {
                         String[] str = song.getName().split("-");
-                        song.setArtist(str[0]);
-                        song.setName(str[1]);
+                        song.setArtist(str[0].trim());
+                        song.setName(str[1].trim());
                     }
                     localMusics.add(song);
                 }

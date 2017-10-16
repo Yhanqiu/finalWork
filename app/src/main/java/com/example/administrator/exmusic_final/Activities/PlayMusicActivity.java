@@ -34,12 +34,17 @@ import com.example.administrator.exmusic_final.ModelsTest.MusicData;
 import com.example.administrator.exmusic_final.R;
 import com.example.administrator.exmusic_final.Services.MusicService;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.example.administrator.exmusic_final.Utils.DisplayUtil;
 import com.example.administrator.exmusic_final.Utils.FastBlurUtil;
+import com.example.administrator.exmusic_final.Utils.FileUtils;
+import com.example.administrator.exmusic_final.Utils.HttpUtil;
 import com.example.administrator.exmusic_final.db.Music;
 import com.example.administrator.exmusic_final.widget.BackgourndAnimationRelativeLayout;
 import com.example.administrator.exmusic_final.widget.BackgroundAdapter;
@@ -49,6 +54,11 @@ import com.example.administrator.exmusic_final.widget.LrcView;
 
 import org.litepal.crud.DataSupport;
 
+import me.zhengken.lyricview.LyricView;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
 public class PlayMusicActivity extends AppCompatActivity implements View
         .OnClickListener {
     private int duration;
@@ -57,7 +67,8 @@ public class PlayMusicActivity extends AppCompatActivity implements View
     private boolean isPaused = true;
     private ArrayList<Music> musicList = new ArrayList<Music>();
 
-    private LrcView mLrcView;
+    //    private LrcView mLrcView;
+    private me.wcy.lrcview.LrcView nLrcView;
     private Toolbar mToolbar;
     private SeekBar mSeekBar;
     private ImageView mIvPlayOrPause, mIvNext, mIvLast;
@@ -75,7 +86,8 @@ public class PlayMusicActivity extends AppCompatActivity implements View
                 next();
             } else {
                 mSeekBar.setProgress(mSeekBar.getProgress() + 1000);
-                mLrcView.seekLrcToTime(mSeekBar.getProgress() + 1000);
+//                mLrcView.seekLrcToTime(mSeekBar.getProgress() + 1000);
+                nLrcView.updateTime(mSeekBar.getProgress() + 1000);
                 mTvMusicDuration.setText(duration2Time(mSeekBar.getProgress()));
                 startUpdateSeekBarProgress();
 
@@ -104,13 +116,14 @@ public class PlayMusicActivity extends AppCompatActivity implements View
             Intent intent = new Intent(this, MusicService.class);
             intent.putExtra(PARAM_MUSIC_LIST, (Serializable) mMusicDatas);
             intent.putExtra("musicId", musicId);
-
             startService(intent);
         }
         initMusicDatas(musicId);
         initView();
         initMusicReceiver();
         makeStatusBarTransparent();
+        try2UpdateMusicPicBackground();
+        updateLrc();
 
 //        List<LrcRow> lrcRows = new LrcDataBuilder().BuiltFromAssets(this, "test2.lrc");
 //
@@ -132,8 +145,11 @@ public class PlayMusicActivity extends AppCompatActivity implements View
     }
 
     private void initView() {
-        mLrcView = (LrcView) findViewById(R.id.lrcview);
-//        mDisc.setVisibility(View.INVISIBLE);
+//        mLrcView = (LrcView) findViewById(R.id.lrcview);
+        nLrcView = (me.wcy.lrcview.LrcView) findViewById(R.id.custom_lyric_view);
+        nLrcView.setLabel("暂无歌词");
+
+        //        mDisc.setVisibility(View.INVISIBLE);
         mIvNext = (ImageView) findViewById(R.id.ivNext);
         mIvLast = (ImageView) findViewById(R.id.ivLast);
         mIvPlayOrPause = (ImageView) findViewById(R.id.ivPlayOrPause);
@@ -169,7 +185,8 @@ public class PlayMusicActivity extends AppCompatActivity implements View
                     next();
                 } else {
                     seekTo(seekBar.getProgress());
-                    mLrcView.seekLrcToTime(seekBar.getProgress());
+//                    mLrcView.seekLrcToTime(seekBar.getProgress());
+                    nLrcView.onDrag(seekBar.getProgress());
                     startUpdateSeekBarProgress();
                 }
             }
@@ -177,14 +194,14 @@ public class PlayMusicActivity extends AppCompatActivity implements View
 
 
         List<LrcRow> lrcRows = new LrcDataBuilder().BuiltFromAssets(this, "小幸运.lrc");
-        mLrcView.setLrcData(lrcRows);
-        mLrcView.setLrcViewSeekListener(new ILrcView.LrcViewSeekListener() {
-            @Override
-            public void onSeek(LrcRow currentlrcrow, long Currenselectrowtime) {
-                seekTo((int) Currenselectrowtime);
-                mLrcView.seekLrcToTime(Currenselectrowtime);
-            }
-        });
+//        mLrcView.setLrcData(lrcRows);
+//        mLrcView.setLrcViewSeekListener(new ILrcView.LrcViewSeekListener() {
+//            @Override
+//            public void onSeek(LrcRow currentlrcrow, long Currenselectrowtime) {
+//                seekTo((int) Currenselectrowtime);
+//                mLrcView.seekLrcToTime(Currenselectrowtime);
+//            }
+//        });
 
         mTvMusicDuration.setText(duration2Time(0));
         mTvTotalMusicDuration.setText(duration2Time(0));
@@ -222,13 +239,14 @@ public class PlayMusicActivity extends AppCompatActivity implements View
     }
 
     //传入参数变成文件系统url
-    private void try2UpdateMusicPicBackground(final int musicPicRes) {
-        if (mRootLayout.isNeed2UpdateBackground(musicPicRes)) {
+    private void try2UpdateMusicPicBackground() {
+        final File imageFile = new File(musicList.get(musicId).getImageURL());
+        if (imageFile.exists() && imageFile.length() > 2048) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
 //                    final Drawable foregroundDrawable = getForegroundDrawable(musicPicRes);
-                    final Drawable foregroundDrawable = BackgroundAdapter.getForegroundDrawable(PlayMusicActivity.this, musicPicRes);
+                    final Drawable foregroundDrawable = BackgroundAdapter.getForegroundDrawableFromFile(PlayMusicActivity.this, musicList.get(musicId).getImageURL());
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -238,7 +256,48 @@ public class PlayMusicActivity extends AppCompatActivity implements View
                     });
                 }
             }).start();
+        } else {
+            String queryId = musicList.get(musicId).getQueryId();
+            if (queryId != null) {
+                String url = "http:/172.25.107.112:8080/ExMusic/TestMusic?msg=image&id=" + queryId;
+                HttpUtil.sendOkHttpRequest(url, new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        if (response != null) {
+                            InputStream inputStream = response.body().byteStream();
+                            if (inputStream != null) {
+                                int result = FileUtils.CreateFileFromStream(musicList.get(musicId).getImageURL(), inputStream);
+                                Log.d("result", result + "");
+                                if (result == 1 && imageFile.length() > 2048) {
+                                    final Drawable foregroundDrawable = BackgroundAdapter.getForegroundDrawableFromFile(PlayMusicActivity.this, musicList.get(musicId).getImageURL());
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mRootLayout.setForeground(foregroundDrawable);
+                                            mRootLayout.beginAnimation();
+                                        }
+                                    });
+                                } else {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mRootLayout.setForeground(getDrawable(R.drawable.ic_blackground));
+//                                            mRootLayout.beginAnimation();
+                                        }
+                                    });
+                                }
+                            }
+                            inputStream.close();
+                        }
+                    }
+                });
+            }
         }
+
     }
 
     public void musicChanged() {
@@ -252,8 +311,8 @@ public class PlayMusicActivity extends AppCompatActivity implements View
     }
 
 
-    public void MusicPicChanged(int musicPicRes) {
-        try2UpdateMusicPicBackground(musicPicRes);
+    public void MusicPicChanged() {
+        try2UpdateMusicPicBackground();
     }
 
 //    public void MusicChanged(DiscView.MusicChangedStatus musicChangedStatus) {
@@ -399,6 +458,45 @@ public class PlayMusicActivity extends AppCompatActivity implements View
         mSeekBar.setSecondaryProgress(duration * cacheProgress / 100);
     }
 
+    private void updateLrc() {
+        final File lrcFile = new File(musicList.get(musicId).getLrcURL());
+        Log.d("inin", lrcFile.length() + "");
+        if (lrcFile.exists() && lrcFile.length() > 1540) {
+            nLrcView.loadLrc(lrcFile);
+        } else {
+            String queryId = musicList.get(musicId).getQueryId();
+            if (queryId != null) {
+                String url = "http:/172.25.107.112:8080/ExMusic/TestMusic?msg=lrc&id=" + queryId;
+                HttpUtil.sendOkHttpRequest(url, new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        if (response != null) {
+                            InputStream inputStream = response.body().byteStream();
+                            Log.d("inin", inputStream.available() + "");
+                            if (inputStream != null) {
+                                int result = FileUtils.CreateFileFromStream(musicList.get(musicId).getLrcURL(), inputStream);
+                                Log.d("result", result + "");
+                                if (result == 1 && lrcFile.length() > 1540) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            nLrcView.loadLrc(new File(musicList.get(musicId).getLrcURL()));
+                                        }
+                                    });
+                                }
+                            }
+                            inputStream.close();
+                        }
+                    }
+                });
+            }
+        }
+    }
+
     class MusicReceiver extends BroadcastReceiver {
 
         @Override
@@ -406,6 +504,8 @@ public class PlayMusicActivity extends AppCompatActivity implements View
             String action = intent.getAction();
             if (action.equals(MusicService.REFRESH_ID)) {
                 musicId = intent.getIntExtra("musicId", musicId);
+                updateLrc();
+                try2UpdateMusicPicBackground();
             } else if (action.equals(MusicService.ACTION_STATUS_MUSIC_PLAY)) {
                 mIvPlayOrPause.setImageResource(R.drawable.ic_pause);
                 musicName.setText(intent.getStringExtra("musicName"));
@@ -442,12 +542,12 @@ public class PlayMusicActivity extends AppCompatActivity implements View
 
     @Override
     protected void onStop() {
-        unregisterReceiver(mMusicReceiver);
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
+        unregisterReceiver(mMusicReceiver);
         super.onDestroy();
     }
 }

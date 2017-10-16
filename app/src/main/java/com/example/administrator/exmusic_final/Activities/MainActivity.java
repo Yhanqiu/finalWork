@@ -1,8 +1,14 @@
 package com.example.administrator.exmusic_final.Activities;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -39,7 +45,8 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
+    private SensorManager sensorManager;
     private ListView music_list;
     private List<Music> musics = new ArrayList<Music>();
     private List<String> nameList = new ArrayList<String>();
@@ -50,6 +57,10 @@ public class MainActivity extends AppCompatActivity {
     private ImageView function_music;
 
     private ProgressDialog progressDialog;
+
+    private Button changeAccountBt;
+    private TextView userNameText;
+    private TextView stepText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +73,24 @@ public class MainActivity extends AppCompatActivity {
             decorView.setSystemUiVisibility(option);
             getWindow().setStatusBarColor(Color.TRANSPARENT);
         }
+
+
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        changeAccountBt = (Button)findViewById(R.id.changeAccountBt);
+        stepText = (TextView)findViewById(R.id.stepText);
+        userNameText = (TextView)findViewById(R.id.userNameText);
+        changeAccountBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SharedPreferences layout = getSharedPreferences("currentStatus", MODE_APPEND);
+                SharedPreferences.Editor layoutEditor = layout.edit();
+                layoutEditor.putBoolean("confirmedFinger", false);
+                layoutEditor.apply();
+                Intent intent = new Intent(MainActivity.this,LoginActivity.class);
+                startActivity(intent);
+            }
+        });
+
         function_music = (ImageView)findViewById(R.id.function_music);
         function_music.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -73,8 +102,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Intent lockIntent = new Intent(MainActivity.this, LockService.class);
-        startService(lockIntent);
+//        Intent lockIntent = new Intent(MainActivity.this, LockService.class);
+//        startService(lockIntent);
         Log.d("test", "before lock");
         music_list = (ListView) findViewById(R.id.musicList);
 
@@ -143,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     musicAdapter.notifyDataSetChanged();
-                    music_list.setSelection(0);
 
                 }
             });
@@ -185,7 +213,6 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             musicAdapter.notifyDataSetChanged();
-                            music_list.setSelection(0);
                             closeProgressDialog();
                         }
                     });
@@ -221,5 +248,37 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER),
+                SensorManager.SENSOR_DELAY_GAME);
+        SharedPreferences layout = getSharedPreferences("currentStatus", MODE_APPEND);
+        userNameText.setText(layout.getString("currentUser","User"));
+    }
+
+    @Override
+    protected void onStop() {
+        sensorManager.unregisterListener(this);
+        super.onStop();
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        int steps = 0;
+        switch (event.sensor.getType()) {
+            case Sensor.TYPE_STEP_COUNTER:
+                steps = (int) event.values[0];
+                stepText.setText(steps + "");
+
+        }
+
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }

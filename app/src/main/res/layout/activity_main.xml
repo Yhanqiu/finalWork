@@ -72,7 +72,8 @@
         android:layout_height="match_parent"
         android:layout_gravity="start">
 
-        <include layout="@layout/step_layout"></include>
+        <include layout="@layout/step_layout"
+            android:id="@+id/step_layout"/>
         <!--<fragment-->
         <!--android:name="com.example.administrator.exmusic_final.RegisterFragment"-->
         <!--android:layout_width="match_parent"-->

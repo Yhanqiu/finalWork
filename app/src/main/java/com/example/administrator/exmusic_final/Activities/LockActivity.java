@@ -12,8 +12,11 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
@@ -23,28 +26,56 @@ import android.widget.TextView;
 import com.example.administrator.exmusic_final.App;
 import com.example.administrator.exmusic_final.R;
 import com.example.administrator.exmusic_final.Services.MusicService;
+import com.example.administrator.exmusic_final.Utils.FileUtils;
+import com.example.administrator.exmusic_final.Utils.HttpUtil;
 import com.example.administrator.exmusic_final.db.Music;
 import com.example.administrator.exmusic_final.widget.BackgroundAdapter;
 
+import org.litepal.crud.DataSupport;
 import org.w3c.dom.Text;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
 import me.imid.swipebacklayout.lib.app.SwipeBackActivity;
+import me.wcy.lrcview.LrcView;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 
 
 public class LockActivity extends SwipeBackActivity implements View.OnClickListener, SensorEventListener {
-    int[] play_pause = {R.drawable.ic_pause, R.drawable.ic_play};
     private SensorManager sensorManager;
+    private me.wcy.lrcview.LrcView nLrcView;
+    private ArrayList<Music> musicList;
+    private int currentPosition;
+    private boolean ifPause;
 
     private ImageButton pauseBt;
     private ImageButton prevBt;
     private ImageButton nextBt;
     private TextView stepNum;
-    private TextView lrcText;
+    //    private TextView lrcText;
     private TextView musicName;
     private TextView musicArtist;
+    private int musicId;
     private ConstraintLayout lock_layout;
 
     private BroadcastReceiver playPauseReceiver;
+
+    private Handler mMusicHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            currentPosition = currentPosition + 1000;
+            nLrcView.updateTime(currentPosition);
+            Log.d("locklock", currentPosition + "");
+            startUpdateSeekBarProgress();
+        }
+    };
 
 
     @Override
@@ -53,9 +84,21 @@ public class LockActivity extends SwipeBackActivity implements View.OnClickListe
         setContentView(R.layout.activity_lock);
         this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        initViews(getIntent());
-        initReceiver();
+        initData(getIntent());
+        initViews();
+    }
 
+    @Override
+    protected void onStart() {
+        initReceiver();
+        super.onStart();
+    }
+
+    private void initData(Intent intent) {
+        currentPosition = intent.getIntExtra("position", 0);
+        musicList = (ArrayList<Music>) intent.getSerializableExtra("localMusics");
+        ifPause = intent.getBooleanExtra("ifPause", false);
+        musicId = intent.getIntExtra("musicId", 0);
     }
 
     private void initReceiver() {
@@ -64,11 +107,27 @@ public class LockActivity extends SwipeBackActivity implements View.OnClickListe
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
                 if (action.equals(MusicService.ACTION_STATUS_MUSIC_PLAY)) {
+                    ifPause = false;
+                    currentPosition = intent.getIntExtra(MusicService.PARAM_MUSIC_CURRENT_POSITION, 0);
                     pauseBt.setImageResource(R.drawable.ic_pause);
-                    musicName.setText(intent.getStringExtra("musicName"));
-                    musicArtist.setText(intent.getStringExtra("musicArtist"));
-                } else {
+                    musicId = intent.getIntExtra("musicId", 0);
+                    musicName.setText(musicList.get(musicId).getName());
+                    musicArtist.setText(musicList.get(musicId).getArtist());
+                    startUpdateSeekBarProgress();
+                } else if (action.equals(MusicService.ACTION_STATUS_MUSIC_PAUSE)) {
+                    ifPause = true;
                     pauseBt.setImageResource(R.drawable.ic_play);
+                    stopUpdateSeekBarProgree();
+                } else {
+                    musicId = intent.getIntExtra("musicId", musicId);
+                    File lrcFile = new File(musicList.get(musicId).getLrcURL());
+                    File imageFile = new File(musicList.get(musicId).getImageURL());
+                    if (lrcFile.exists()) {
+                        nLrcView.loadLrc(lrcFile);
+                    }
+                    if (imageFile.exists()) {
+                        refreshBackground();
+                    }
                 }
             }
         };
@@ -76,11 +135,22 @@ public class LockActivity extends SwipeBackActivity implements View.OnClickListe
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(MusicService.ACTION_STATUS_MUSIC_PAUSE);
         intentFilter.addAction(MusicService.ACTION_STATUS_MUSIC_PLAY);
+        intentFilter.addAction(MusicService.REFRESH_ID);
         registerReceiver(playPauseReceiver, intentFilter);
 
     }
 
-    private void initViews(Intent intent) {
+    private void startUpdateSeekBarProgress() {
+        /*避免重复发送Message*/
+        stopUpdateSeekBarProgree();
+        mMusicHandler.sendEmptyMessageDelayed(0, 1000);
+    }
+
+    private void stopUpdateSeekBarProgree() {
+        mMusicHandler.removeMessages(0);
+    }
+
+    private void initViews() {
 
         if (Build.VERSION.SDK_INT >= 21) {
             View decorView = getWindow().getDecorView();
@@ -90,24 +160,28 @@ public class LockActivity extends SwipeBackActivity implements View.OnClickListe
             getWindow().setStatusBarColor(Color.TRANSPARENT);
         }
 
+
         pauseBt = (ImageButton) findViewById(R.id.LPlayBt);
         prevBt = (ImageButton) findViewById(R.id.LPrevBt);
         nextBt = (ImageButton) findViewById(R.id.LNextBt);
         stepNum = (TextView) findViewById(R.id.stepNum);
-        lrcText = (TextView) findViewById(R.id.lrcText);
+//        lrcText = (TextView) findViewById(R.id.lrcText);
         musicName = (TextView) findViewById(R.id.musicName);
         musicArtist = (TextView) findViewById(R.id.musicArtist);
         lock_layout = (ConstraintLayout) findViewById(R.id.lock_layout);
 
 //        musicNameText = intent.getStringExtra();
 //        musicArtistText = intent.getStringExtra();
-        musicName.setText(intent.getStringExtra("musicName"));
-        musicArtist.setText(intent.getStringExtra("musicArtist"));
-        if (intent.getBooleanExtra("ifPause",false)) {
+        nLrcView = (LrcView) findViewById(R.id.lock_lyric_view);
+        File lrcFile = new File(musicList.get(musicId).getLrcURL());
+        updateLrc();
+        if (ifPause) {
             pauseBt.setImageResource(R.drawable.ic_play);
         } else {
             pauseBt.setImageResource(R.drawable.ic_pause);
+            startUpdateSeekBarProgress();
         }
+//
 
 //        lockscreen.putExtra("musicName",musicName);
 //        lockscreen.putExtra("musicArtist",musicArtist);
@@ -120,20 +194,118 @@ public class LockActivity extends SwipeBackActivity implements View.OnClickListe
     }
 
 
-    private void refreshBackground() {
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final Drawable foregroundDrawable = BackgroundAdapter.getForegroundDrawable(LockActivity.this, R.drawable.test_back);
-                runOnUiThread(new Runnable() {
+    private void updateLrc() {
+        final File lrcFile = new File(musicList.get(musicId).getLrcURL());
+        if (lrcFile.exists() && lrcFile.length() > 1540) {
+            nLrcView.loadLrc(lrcFile);
+        } else {
+            String queryId = musicList.get(musicId).getQueryId();
+            if (queryId != null) {
+                String url = "http:/172.25.107.112:8080/ExMusic/TestMusic?msg=lrc&id=" + queryId;
+                HttpUtil.sendOkHttpRequest(url, new Callback() {
                     @Override
-                    public void run() {
-                        lock_layout.setBackground(foregroundDrawable);
+                    public void onFailure(Call call, IOException e) {
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        if (response != null) {
+                            InputStream inputStream = response.body().byteStream();
+                            if (inputStream != null) {
+                                int result = FileUtils.CreateFileFromStream(musicList.get(musicId).getLrcURL(), inputStream);
+                                Log.d("result", result + "");
+                                if (result == 1 && lrcFile.length() > 1540) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            nLrcView.loadLrc(new File(musicList.get(musicId).getLrcURL()));
+                                        }
+                                    });
+                                }
+                            }
+                            inputStream.close();
+                        }
                     }
                 });
             }
-        }).start();
+        }
+    }
+
+    private void refreshBackground() {
+        final File imageFile = new File(musicList.get(musicId).getImageURL());
+        if (imageFile.exists() && imageFile.length() > 2048) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+//                    final Drawable foregroundDrawable = getForegroundDrawable(musicPicRes);
+                    final Drawable foregroundDrawable = BackgroundAdapter.getForegroundDrawableFromFile(LockActivity.this, musicList.get(musicId).getImageURL());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            lock_layout.setBackground(foregroundDrawable);
+                        }
+                    });
+                }
+            }).start();
+        } else {
+            String queryId = musicList.get(musicId).getQueryId();
+            if (queryId != null) {
+                String url = "http:/172.25.107.112:8080/ExMusic/TestMusic?msg=image&id=" + queryId;
+                HttpUtil.sendOkHttpRequest(url, new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        if (response != null) {
+                            InputStream inputStream = response.body().byteStream();
+                            if (inputStream != null) {
+                                int result = FileUtils.CreateFileFromStream(musicList.get(musicId).getImageURL(), inputStream);
+                                Log.d("result", result + "");
+                                if (result == 1 && imageFile.length() > 2048) {
+                                    final Drawable foregroundDrawable = BackgroundAdapter.getForegroundDrawableFromFile(LockActivity.this, musicList.get(musicId).getImageURL());
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            lock_layout.setBackground(foregroundDrawable);
+                                        }
+                                    });
+                                } else {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            lock_layout.setBackground(getDrawable(R.drawable.ic_blackground));
+                                        }
+                                    });
+
+                                }
+                            }
+                            inputStream.close();
+                        }
+                    }
+                });
+            }
+
+        }
+
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                final Drawable foregroundDrawable;
+//                if (new File(musicList.get(musicId).getImageURL()).exists()) {
+//                    foregroundDrawable = BackgroundAdapter.getForegroundDrawableFromFile(LockActivity.this, musicList.get(musicId).getImageURL());
+//                } else {
+//                    foregroundDrawable = BackgroundAdapter.getForegroundDrawable(LockActivity.this, R.drawable.ic_blackground);
+//                }
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        lock_layout.setBackground(foregroundDrawable);
+//                    }
+//                });
+//            }
+//        }).start();
 
     }
 
@@ -151,13 +323,14 @@ public class LockActivity extends SwipeBackActivity implements View.OnClickListe
 
     @Override
     protected void onStop() {
+
+        unregisterReceiver(playPauseReceiver);
+        sensorManager.unregisterListener(this);
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
-        unregisterReceiver(playPauseReceiver);
-        sensorManager.unregisterListener(this);
         super.onDestroy();
     }
 
@@ -169,22 +342,16 @@ public class LockActivity extends SwipeBackActivity implements View.OnClickListe
         sendBroadcast(new Intent(action));
     }
 
-    public void setPlayPauseBt(int i) {
-        if (App.isPause) {
-            pauseBt.setImageResource(play_pause[(1 + i) % 2]);
-        } else {
-            pauseBt.setImageResource(play_pause[i]);
-        }
-    }
-
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.LPlayBt:
-                if (App.isPause) {
+                if (ifPause) {
+                    ifPause = false;
                     optMusic(MusicService.ACTION_OPT_MUSIC_PLAY);
                 } else {
+                    ifPause = true;
                     optMusic(MusicService.ACTION_OPT_MUSIC_PAUSE);
                 }
                 break;

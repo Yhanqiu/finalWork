@@ -52,8 +52,15 @@
         android:layout_above="@+id/rlMusicTime"
         android:layout_below="@id/toolBar">
 
-        <com.example.administrator.exmusic_final.widget.LrcView
-            android:id="@+id/lrcview"
+        <!--<com.example.administrator.exmusic_final.widget.LrcView-->
+            <!--android:id="@+id/lrcview"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent" />-->
+
+        <me.wcy.lrcview.LrcView
+            android:id="@+id/custom_lyric_view"
+            app:lrcTextSize="16sp"
+            app:lrcPadding="25dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 

@@ -36,13 +36,16 @@ public class HttpUtil {
             public void onResponse(Call call, Response response) throws IOException {
                 if (response != null) {
                     InputStream inputStream = response.body().byteStream();
-                    FileUtils.CreateFileFromStream(MusicURL,inputStream);
+                    if(inputStream!=null){
+                        FileUtils.CreateFileFromStream(MusicURL, inputStream);
+                    }
                     inputStream.close();
                 }
             }
         });
 
     }
+
     public static void downloadImage(String queryId, final String imageURL) {
 
         String url = "http:/172.25.107.112:8080/ExMusic/TestMusic?msg=image&id=" + queryId;
@@ -56,13 +59,16 @@ public class HttpUtil {
             public void onResponse(Call call, Response response) throws IOException {
                 if (response != null) {
                     InputStream inputStream = response.body().byteStream();
-                    FileUtils.CreateFileFromStream(imageURL,inputStream);
+                    if (inputStream != null) {
+                        FileUtils.CreateFileFromStream(imageURL, inputStream);
+                    }
                     inputStream.close();
                 }
             }
         });
 
     }
+
     public static void downloadLrc(String queryId, final String lrcURL) {
 
         String url = "http:/172.25.107.112:8080/ExMusic/TestMusic?msg=lrc&id=" + queryId;
@@ -77,7 +83,10 @@ public class HttpUtil {
             public void onResponse(Call call, Response response) throws IOException {
                 if (response != null) {
                     InputStream inputStream = response.body().byteStream();
-                    FileUtils.CreateFileFromStream(lrcURL,inputStream);
+                    if (inputStream != null) {
+                        FileUtils.CreateFileFromStream(lrcURL, inputStream);
+
+                    }
                     inputStream.close();
                 }
             }

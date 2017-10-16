@@ -68,42 +68,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             if (pw.length()<6||pw.length()>20){
                 Toast.makeText(this,"密码长度在6到20之间",Toast.LENGTH_SHORT).show();
             }else {
-//                if (users.contains(id)){
-//                    Toast.makeText(this,"用户名已被注册",Toast.LENGTH_SHORT).show();
-//                }else{
-//===========================文件读写存储===================================================
-//                try{
-//                    out = openFileOutput("users.txt", Context.MODE_APPEND);
-//                    writer = new BufferedWriter(new OutputStreamWriter(out));
-//                    Toast.makeText(this,id+","+pw,Toast.LENGTH_LONG).show();
-//                    writer.write(id+","+pw);
-//                    writer.close();
-//                }catch (IOException e) {
-//                    e.printStackTrace();
-//                }finally {
-//                    try{
-//                        if(writer!=null) writer.close();
-//                    }catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//============================sharedpreferences键值对存储=====================================
-//                    SharedPreferences.Editor usEditor = users.edit();
-//                    SharedPreferences.Editor saltsEditor = salts.edit();
-//                    //随机数生成盐
-//                    salt = new Random().nextInt(100000);
-//                    saltStr = sha(""+salt);
-//                    encryptedPw = sha(pw+saltStr);
-//                    saltsEditor.putString(id,saltStr);
-//                    usEditor.putString(id,encryptedPw);
-//                    Toast.makeText(RegisterActivity.this,encryptedPw,Toast.LENGTH_SHORT).show();
-//                    saltsEditor.apply();
-//                    usEditor.apply();
-
-//                    salt = new Random().nextInt(100000);
-//                    saltStr = LoginUtil.sha(""+salt);
-//                    encryptedPw = LoginUtil.sha(pw+saltStr);
-                    LoginUtil.sendLoginRequest("register", id, pw, new Callback() {
+                    LoginUtil.sendLoginRequest("register", id, LoginUtil.sha(pw), new Callback() {
                         @Override
                         public void onFailure(Call call, IOException e) {
 
@@ -123,7 +88,12 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                                     }
                                 });
                             }else {
-                                Toast.makeText(RegisterActivity.this,"用户名已存在",Toast.LENGTH_SHORT).show();
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(RegisterActivity.this,"用户名已存在",Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                             }
 
                         }
